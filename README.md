@@ -43,62 +43,82 @@ poetry run uvicorn orchestration_svc.main:app --reload
 ```
 
 ## Testing
+
+# orchestration-svc
+
+A minimal, world-class orchestration service focused on modularity, testability, and clarity. All business logic, adapters, and domain models are externalized for maximum flexibility and maintainability.
+
+---
+
+## Features
+- **Pure orchestration logic**: No business logic or integrations in the core service.
+- **Semantic API**: JSON-LD responses for interoperability and clarity.
+- **Dependency Injection**: All dependencies are injected and mockable for testability.
+- **100% Test Coverage**: Comprehensive, parameterized, and reusable test suite.
+- **Clean Architecture**: Ports/adapters pattern, clear separation of concerns.
+
+---
+
+## Quickstart
+
+### Requirements
+- Python 3.9+
+- [Poetry](https://python-poetry.org/)
+
+### Install dependencies
+```sh
+poetry install
+```
+
+### Run the service
+```sh
+poetry run uvicorn src.orchestration_svc.main:app --reload
+```
+
+### Run tests
 ```sh
 poetry run pytest
 ```
 
-## API
+---
 
-- `GET /api/workflows/{workflow_id}`: Retrieve workflow by ID (opaque, not business-meaningful)
-    - Returns: Workflow object with semantic JSON-LD annotations and OpenAPI/x-ontology field docs.
-    - Returns 404 if not found (no `@context` in error response).
-    - Supports both sync and async implementations.
-    - Logging and error handling are consistent and observable.
+## API Example
 
-### API Response Contract (JSON-LD)
+**Get Workflow by ID**
+
+```
+GET /api/v1/workflows/{workflow_id}
+```
+
+**Response (200):**
 ```json
 {
+  "id": "wf-123",
+  "alias": "Test Workflow",
+  "status": "started",
   "@context": {
     "@vocab": "https://schema.org/",
     "id": "@id",
     "alias": "rdfs:label",
     "status": "schema:status"
-  },
-  "id": "wf-456",
-  "alias": "Order Processing",
-  "status": "started"
+  }
 }
 ```
 
-#### Field Semantics (OpenAPI/x-ontology)
-- `id`: Opaque workflow identifier (not business-meaningful). `x-ontology: @id`
-- `alias`: Business-meaningful alias or label. `x-ontology: rdfs:label`
-- `status`: Current status of the workflow. `x-ontology: schema:status`
+---
 
-#### Error Handling
-- 404: Workflow not found (no `@context` in error response)
-
-#### Semantic/Ontological Alignment
-- All API responses are JSON-LD with a semantic `@context` for knowledge graph and ontology integration.
-- All fields are documented with OpenAPI `description` and `x-ontology` annotations.
-
-#### Async/Sync
-- All interfaces and implementations support both sync and async patterns.
-
-#### Logging & Observability
-- All errors and key events must be logged with correlation IDs for traceability.
-
-## Extending & Integrating
-- Implement ports in `domain/ports.py` in your own adapters/services.
-- Wire them up in `container.py` using dependency-injector.
-- All integrations are via public, versioned contracts—never direct imports.
-- This service is stateless and horizontally scalable.
-
-## Microservice Integration
-- This service is designed to be deployed independently and communicate with other services via APIs or events.
-- All state, persistence, and business logic are externalized.
-- See `domain/ports.py` for contract definitions.
+## Architecture
+- **src/orchestration_svc/api/routes.py**: API endpoints, orchestration only.
+- **src/orchestration_svc/engine/core.py**: Orchestration logic, no business logic.
+- **src/orchestration_svc/container.py**: Dependency injection container.
+- **tests/**: Comprehensive, reusable, and parameterized test suite.
 
 ---
 
-> Designed for clarity, modularity, and testability by inspiration from Fowler, Beck, Evans, and the world’s best architects.
+## Contributing
+See `CONTRIBUTING.md` for guidelines. All contributions must include tests and documentation.
+
+---
+
+## License
+MIT

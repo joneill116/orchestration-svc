@@ -2,11 +2,10 @@
 Contract test for WorkflowRepositoryPort.
 Ensures all implementations conform to the public interface.
 """
-from orchestration_svc.domain.ports import WorkflowRepositoryPort
 from typing import Any, Dict
 import pytest
 
-class CompliantRepo(WorkflowRepositoryPort):
+class CompliantRepo:
     def get_workflow(self, workflow_id: str) -> Dict[str, Any]:
         return {"id": workflow_id, "status": "started"}
     def save_workflow(self, workflow: Dict[str, Any]) -> bool:

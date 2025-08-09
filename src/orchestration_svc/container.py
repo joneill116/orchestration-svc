@@ -6,7 +6,7 @@ Wires up only orchestration logic and interfaces/ports—no adapters or business
 
 from dependency_injector import containers, providers
 from orchestration_svc.engine.core import OrchestrationEngine
-from orchestration_svc.domain.ports import WorkflowRepositoryPort
+
 
 class Container(containers.DeclarativeContainer):
     """
@@ -15,6 +15,6 @@ class Container(containers.DeclarativeContainer):
     """
     wiring_config = containers.WiringConfiguration(modules=["orchestration_svc.api.routes"])
 
-    # Example: workflow_repo = providers.Singleton(YourWorkflowRepoImpl)
-    workflow_repo = providers.Object(None)  # Replace with real implementation
-    engine = providers.Singleton(OrchestrationEngine, workflow_repo=workflow_repo)
+    # All adapters/integrations are externalized; workflow_repo is a placeholder
+    workflow_repo = providers.Object(None)  # Externalized in real deployments
+    engine = providers.Factory(OrchestrationEngine, workflow_repo=workflow_repo)

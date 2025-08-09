@@ -8,24 +8,17 @@ Ensures the /api/v1/workflows/{workflow_id} endpoint returns the expected schema
 @pytest.fixture(autouse=True)
 def reset_container():
     yield
-    app.container.engine.reset_last_overriding()
+    app.container.workflow_repo.reset_last_overriding()
 
 from fastapi.testclient import TestClient
 from orchestration_svc.main import app
 
-class DummyWorkflowRepo:
-    def get_workflow(self, workflow_id):
-        return {"id": workflow_id, "status": "started"}
 
-class DummyEngine:
-    def __init__(self):
-        self.workflow_repo = DummyWorkflowRepo()
-    def start_workflow(self, workflow_id):
-        return self.workflow_repo.get_workflow(workflow_id)
+from .utils import MockWorkflowRepo
 
 def test_get_workflow_contract():
     # Inject dummy engine into the app's container
-    app.container.engine.override(DummyEngine())
+    app.container.workflow_repo.override(MockWorkflowRepo(known_workflow_ids={"wf-contract"}))
     client = TestClient(app)
     workflow_id = "wf-contract"
     response = client.get(f"/api/v1/workflows/{workflow_id}", headers={"x-correlation-id": "test-corr-id"})
