@@ -118,9 +118,13 @@ poetry run pytest --cov=src/orchestration_svc --cov=tests --cov-report=term-miss
 poetry run mypy src/orchestration_svc/ tests/
 ```
 
+
 ### Linting
 ```sh
+# Ruff (fast, modern linter)
 poetry run ruff check .
+# Or flake8 (classic linter, also supported in CI)
+poetry run flake8 src/orchestration_svc/ tests/
 ```
 
 
