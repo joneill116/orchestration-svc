@@ -123,9 +123,10 @@ poetry run mypy src/orchestration_svc/ tests/
 poetry run ruff check .
 ```
 
+
 ### API documentation (OpenAPI/Swagger)
-- Interactive docs: [http://localhost:8000/docs](http://localhost:8000/docs)
-- ReDoc: [http://localhost:8000/redoc](http://localhost:8000/redoc)
+- Interactive docs: [http://localhost:8000/docs](http://localhost:8000/docs) *(run the service locally first)*
+- ReDoc: [http://localhost:8000/redoc](http://localhost:8000/redoc) *(run the service locally first)*
 
 
 ---

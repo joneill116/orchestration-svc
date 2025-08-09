@@ -9,25 +9,25 @@
 ---
 
 ```mermaid
-%% alt: Orchestration-svc boundaries: only orchestration logic, API, and ports. All adapters/integrations are external.
+%% Orchestration-svc boundaries: only orchestration logic, API, and ports. All adapters/integrations are external.
 graph TD
     Client["Client / API Consumer"]
-    subgraph orchestration-svc (this repo)
+    subgraph orchestration_svc
         APILayer["1️⃣ API Layer (FastAPI)"]
         Engine["2️⃣ Orchestration Engine"]
         Ports["3️⃣ Ports / Interfaces"]
     end
-    subgraph External Services
+    subgraph ExternalServices
         Adapter1["Adapter: Workflow Repo"]
         Adapter2["Adapter: Domain Logic"]
         Adapter3["Adapter: Integrations"]
     end
-    Client -->|"Request"| APILayer
-    APILayer -->|"Dispatch"| Engine
-    Engine -->|"Invoke"| Ports
-    Ports -.->|"Contract"| Adapter1
-    Ports -.->|"Contract"| Adapter2
-    Ports -.->|"Contract"| Adapter3
+    Client -->|Request| APILayer
+    APILayer -->|Dispatch| Engine
+    Engine -->|Invoke| Ports
+    Ports -.->|Contract| Adapter1
+    Ports -.->|Contract| Adapter2
+    Ports -.->|Contract| Adapter3
 ```
 
 <p align="center"><i>Request flow: <b>1️⃣ API Layer</b> → <b>2️⃣ Orchestration Engine</b> → <b>3️⃣ Ports</b> → <b>External Adapters</b></i></p>
