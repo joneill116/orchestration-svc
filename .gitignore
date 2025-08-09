@@ -53,3 +53,6 @@ coverage.xml
 
 # Pyre type checker
 .pyre/
+
+# Recursively ignore all __pycache__ folders
+**/__pycache__/

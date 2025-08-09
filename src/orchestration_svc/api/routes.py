@@ -4,46 +4,19 @@ Exposes orchestration endpoints only—no business logic or integrations.
 All dependencies are injected and mockable for microservice clarity.
 """
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from fastapi.responses import JSONResponse
-from fastapi import status
 
 from orchestration_svc.engine.core import OrchestrationEngine
+from orchestration_svc.constants import get_error_schema
 
 
 router = APIRouter()
 
 
-
-
-# Dependency: resolve engine from the app's DI container at request time
-from fastapi import Request
 def get_engine(request: Request) -> OrchestrationEngine:
-    return request.app.container.engine()
+    return request.app.container.engine()  # type: ignore[no-any-return]
 
-# Shared JSON-LD context for all workflow responses
-JSONLD_CONTEXT = {
-    "@vocab": "https://schema.org/",
-    "id": "@id",
-    "alias": "rdfs:label",
-    "status": "schema:status",
-}
-
-ERROR_SCHEMA = {
-    "type": "object",
-    "properties": {
-        "error": {
-            "type": "object",
-            "properties": {
-                "code": {"type": "string", "example": "WORKFLOW_NOT_FOUND"},
-                "message": {"type": "string", "example": "Workflow not found"},
-                "detail": {"type": "string", "example": "Extra error details (optional)"},
-            },
-            "required": ["code", "message"]
-        }
-    },
-    "required": ["error"]
-}
 
 @router.get(
     "/workflows/{workflow_id}",
@@ -51,11 +24,20 @@ ERROR_SCHEMA = {
     response_description="The workflow data as a JSON-LD dictionary",
     tags=["Workflows"],
     responses={
-        404: {"description": "Not found", "content": {"application/json": {"schema": ERROR_SCHEMA}}},
-        500: {"description": "Internal error", "content": {"application/json": {"schema": ERROR_SCHEMA}}},
-    }
+        404: {
+            "description": "Not found",
+            "content": {"application/json": {"schema": get_error_schema()}},
+        },
+        500: {
+            "description": "Internal error",
+            "content": {"application/json": {"schema": get_error_schema()}},
+        },
+    },
 )
-def get_workflow(workflow_id: str, engine: OrchestrationEngine = Depends(get_engine)) -> dict:
+def get_workflow(
+    workflow_id: str,
+    engine: OrchestrationEngine = Depends(get_engine),
+) -> JSONResponse:
     """
     Retrieve a workflow by its opaque ID, returning a JSON-LD dictionary.
     The response includes:
@@ -68,7 +50,7 @@ def get_workflow(workflow_id: str, engine: OrchestrationEngine = Depends(get_eng
     try:
         workflow = engine.start_workflow(workflow_id)
     except RuntimeError as e:
-        # Use new error model
+        error_schema = get_error_schema()
         return JSONResponse(
             status_code=500,
             content={
@@ -76,19 +58,20 @@ def get_workflow(workflow_id: str, engine: OrchestrationEngine = Depends(get_eng
                     "code": "ENGINE_ERROR",
                     "message": "Engine failure",
                     "detail": str(e),
+                    "_schema": error_schema["properties"]["error"],
                 }
             },
         )
     if workflow is None:
+        error_schema = get_error_schema()
         return JSONResponse(
             status_code=404,
             content={
                 "error": {
                     "code": "WORKFLOW_NOT_FOUND",
                     "message": "Workflow not found",
+                    "_schema": error_schema["properties"]["error"],
                 }
             },
         )
-    response = dict(workflow)
-    response["@context"] = JSONLD_CONTEXT
-    return response
+    return JSONResponse(content=workflow)

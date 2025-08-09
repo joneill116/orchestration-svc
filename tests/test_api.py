@@ -1,46 +1,47 @@
-
-
 # Standard library
-from typing import Optional
+import uuid
+from typing import Callable, Any, Generator
 
 # Third-party
 import pytest
 from fastapi.testclient import TestClient
 
 # Local imports
-from orchestration_svc.engine.core import OrchestrationEngine
 from orchestration_svc.main import app
-
-
 from .utils import MockWorkflowRepo
-import uuid
-
-
 
 
 # Use fixture to reset DI container overrides after each test for isolation
 @pytest.fixture(autouse=True)
-def reset_container():
+def reset_container() -> Generator[None, None, None]:
     yield
     provider = app.container.workflow_repo
     if getattr(provider, "overridden", False):
         provider.reset_last_overriding()
 
 
-
 @pytest.mark.parametrize(
     "workflow_id,expected_status,expected_body",
     [
-        (str(uuid.uuid4()), 200, lambda wid: {"id": wid, "alias": "Test Workflow", "status": "started"}),
-        (str(uuid.uuid4()), 200, lambda wid: {"id": wid, "alias": "Test Workflow", "status": "started"}),
+        (
+            str(uuid.uuid4()),
+            200,
+            lambda wid: {"id": wid, "alias": "Test Workflow", "status": "started"},
+        ),
     ],
 )
-def test_get_workflow_success(workflow_id, expected_status, expected_body):
+def test_get_workflow_success(
+    workflow_id: str,
+    expected_status: int,
+    expected_body: Callable[[str], dict[str, Any]],
+) -> None:
     """
     Test /api/v1/workflows/{workflow_id} with valid mocked dependencies and edge-case IDs.
     'id' is opaque; 'alias' is business-meaningful. Validates JSON-LD @context.
     """
-    app.container.workflow_repo.override(MockWorkflowRepo(known_workflow_ids={workflow_id}))
+    app.container.workflow_repo.override(
+        MockWorkflowRepo(known_workflow_ids={workflow_id})
+    )
     client = TestClient(app)
     response = client.get(f"/api/v1/workflows/{workflow_id}")
     assert response.status_code == expected_status
@@ -56,7 +57,6 @@ def test_get_workflow_success(workflow_id, expected_status, expected_body):
         assert data[k] == v
 
 
-
 @pytest.mark.parametrize(
     "workflow_id,expected_detail",
     [
@@ -64,7 +64,7 @@ def test_get_workflow_success(workflow_id, expected_status, expected_body):
         (str(uuid.uuid4()), "Workflow not found"),
     ],
 )
-def test_get_workflow_not_found(workflow_id, expected_detail):
+def test_get_workflow_not_found(workflow_id: str, expected_detail: str) -> None:
     """
     Test /api/v1/workflows/{workflow_id} with a non-existent workflow (simulate 404).
     Ensures @context is not present and error model is correct.
@@ -80,7 +80,6 @@ def test_get_workflow_not_found(workflow_id, expected_detail):
     assert data["error"]["message"] == expected_detail
 
 
-
 @pytest.mark.parametrize(
     "workflow_id,exc_msg",
     [
@@ -88,14 +87,16 @@ def test_get_workflow_not_found(workflow_id, expected_detail):
         ("wf-crash", "Engine failure"),
     ],
 )
-def test_get_workflow_engine_error(workflow_id, exc_msg):
+def test_get_workflow_engine_error(workflow_id: str, exc_msg: str) -> None:
     """
     Test /api/v1/workflows/{workflow_id} when the engine raises an exception (simulate 500).
     Ensures @context is not present and error model is correct.
     """
+
     class ErrorRepo:
-        def get_workflow(self, workflow_id):
+        def get_workflow(self, workflow_id: str) -> None:
             raise RuntimeError(exc_msg)
+
     app.container.workflow_repo.override(ErrorRepo())
     client = TestClient(app)
     response = client.get(f"/api/v1/workflows/{workflow_id}")
@@ -108,12 +109,11 @@ def test_get_workflow_engine_error(workflow_id, exc_msg):
     assert data["error"]["detail"] == exc_msg
 
 
-
 @pytest.mark.parametrize(
     "workflow_id",
     ["wf-missing-repo", "wf-none", "wf-null"],
 )
-def test_get_workflow_missing_repo(workflow_id):
+def test_get_workflow_missing_repo(workflow_id: str) -> None:
     """
     Test /api/v1/workflows/{workflow_id} when the workflow_repo is missing (simulate 500).
     Ensures @context is not present and error model is correct.
@@ -127,12 +127,13 @@ def test_get_workflow_missing_repo(workflow_id):
     assert "error" in data
     assert data["error"]["code"] == "ENGINE_ERROR"
     assert data["error"]["message"] == "Engine failure"
-    assert "Workflow repository is not configured in OrchestrationEngine" in data["error"]["detail"]
+    assert (
+        "Workflow repository is not configured in OrchestrationEngine"
+        in data["error"]["detail"]
+    )
 
 
-
-
-def validate_jsonld_against_schema(jsonld_obj):
+def validate_jsonld_against_schema(jsonld_obj: dict[str, Any]) -> bool:
     """
     Stub for validating JSON-LD against a SHACL/OWL schema.
     In a real system, use pySHACL or rdflib to validate against an ontology file.
@@ -143,6 +144,6 @@ def validate_jsonld_against_schema(jsonld_obj):
     return True
 
 
-def test_validate_jsonld_against_schema_covers():
+def test_validate_jsonld_against_schema_covers() -> None:
     # Covers the stub for coverage completeness
     assert validate_jsonld_against_schema({}) is True
