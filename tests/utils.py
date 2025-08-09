@@ -1,3 +1,27 @@
+import pytest
+# ...existing code...
+
+def test_mock_workflow_repo_get_workflow_all_paths():
+    # Covers: known_workflow_ids=None, known_workflow_ids set, not a string, not found
+    repo1 = MockWorkflowRepo()
+    assert repo1.get_workflow("not-present") is None
+    repo2 = MockWorkflowRepo(known_workflow_ids={"foo"})
+    assert repo2.get_workflow("foo")["id"] == "foo"
+    assert repo2.get_workflow(123) is None
+    assert repo2.get_workflow("bar") is None
+
+def test_mock_workflow_repo_save_workflow():
+    repo = MockWorkflowRepo()
+    assert repo.save_workflow({"id": "x"}) is True
+
+def test_mock_engine_start_workflow():
+    engine = MockEngine()
+    # Should return None for unknown id
+    assert engine.start_workflow("not-present") is None
+    # Should return a workflow for known id
+    engine.workflow_repo.known_workflow_ids.add("foo")
+    result = engine.start_workflow("foo")
+    assert result["id"] == "foo"
 """
 Shared test utilities and fixtures for orchestration-svc tests.
 Provides reusable dummy repositories, engines, and fixtures for test isolation and clarity.
@@ -51,9 +75,11 @@ class MockEngine:
 
 @pytest.fixture(autouse=True)
 def reset_container():
-    """Reset DI container overrides after each test for isolation."""
+    """Reset DI container overrides after each test for isolation. Only resets if overridden."""
     yield
-    app.container.workflow_repo.reset_last_overriding()
+    provider = app.container.workflow_repo
+    if getattr(provider, "overridden", False):
+        provider.reset_last_overriding()
 
 
 @pytest.fixture
