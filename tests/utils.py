@@ -38,6 +38,7 @@ Utility test helpers for orchestration-svc.
 """
 
 
+
 class MockWorkflowRepo(WorkflowRepositoryPort):
     """A mock repo returning plain dicts with JSON-LD context for testing."""
 
@@ -64,6 +65,18 @@ class MockWorkflowRepo(WorkflowRepositoryPort):
     def save_workflow(self, workflow: Dict[str, Any]) -> bool:
         return True
 
+    def create_workflow(self, alias: str) -> dict[str, Any]:
+        import uuid
+        workflow_id = str(uuid.uuid4())
+        self.known_workflow_ids.add(workflow_id)
+        return {
+            "id": workflow_id,
+            "alias": alias,
+            "status": "started",
+            "@context": JSONLD_CONTEXT,
+        }
+
+
 
 class MockEngine:
     def __init__(self) -> None:
@@ -71,6 +84,9 @@ class MockEngine:
 
     def start_workflow(self, workflow_id: str) -> Optional[Dict[str, Any]]:
         return self.workflow_repo.get_workflow(workflow_id)
+
+    def create_workflow(self, alias: str) -> dict[str, Any]:
+        return self.workflow_repo.create_workflow(alias)
 
 
 @pytest.fixture(autouse=True)

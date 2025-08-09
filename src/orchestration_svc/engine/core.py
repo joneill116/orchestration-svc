@@ -1,3 +1,4 @@
+
 """
 Core orchestration engine logic.
 Coordinates workflow execution only—no business logic, adapters, or integrations.
@@ -11,6 +12,14 @@ from orchestration_svc.constants import JSONLD_CONTEXT
 
 
 class OrchestrationEngine:
+
+    def create_workflow(self, alias: str) -> dict[str, Any]:
+        """
+        Create a new workflow with a human-readable alias. Returns the created workflow dict.
+        """
+        if self.workflow_repo is None:
+            raise RuntimeError("Workflow repository is not configured in OrchestrationEngine")
+        return self.workflow_repo.create_workflow(alias)
     """
     The orchestration engine coordinates workflow execution.
     All adapters, integrations, and domain models are externalized.

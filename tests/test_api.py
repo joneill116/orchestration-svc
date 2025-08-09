@@ -1,3 +1,22 @@
+
+def test_create_workflow_success() -> None:
+    """
+    Test POST /api/v1/workflows to create a workflow by alias. Validates opaque id and JSON-LD context.
+    """
+    app.container.workflow_repo.override(MockWorkflowRepo())
+    client = TestClient(app)
+    alias = "Human Readable Workflow Name"
+    response = client.post(
+        "/api/v1/workflows",
+        json={"alias": alias},
+    )
+    assert response.status_code == 201
+    data = response.json()
+    assert "id" in data and isinstance(data["id"], str)
+    assert data["alias"] == alias
+    assert data["status"] == "started"
+    assert "@context" in data
+    assert data["@context"]["@vocab"] == "https://schema.org/"
 # Standard library
 import uuid
 from typing import Callable, Any, Generator
