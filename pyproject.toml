@@ -8,7 +8,7 @@ authors = ["Your Name <your.email@example.com>"]
 python = ">=3.9,<4.0"
 fastapi = "^0.116.1"
 dependency-injector = "^4.41.0"
-uvicorn = {extras = ["standard"], version = "^0.29.0"}
+uvicorn = {extras = ["standard"], version = ">=0.29,<0.40"}
 
 [tool.poetry.group.dev.dependencies]
 httpx = "^0.28.1"
